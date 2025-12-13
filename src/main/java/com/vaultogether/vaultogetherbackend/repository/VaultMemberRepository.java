@@ -13,5 +13,7 @@ public interface VaultMemberRepository extends JpaRepository<VaultMember, VaultM
 
   boolean existsByVaultAndUser(Vault vault, User user);
   List<VaultMember> findByUser(User user);
+  long countByVault(Vault vault);
+  List<VaultMember> findByVault(Vault vault);
 
 }

@@ -4,10 +4,12 @@ import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import com.vaultogether.vaultogetherbackend.model.Vault;
 import com.vaultogether.vaultogetherbackend.model.VaultItem;
 
 public interface VaultItemRepository extends JpaRepository<VaultItem, Long> {
 
   List<VaultItem> findByVault_VaultId(Long vaultId);
+  long countByVault(Vault vault);
 
 }

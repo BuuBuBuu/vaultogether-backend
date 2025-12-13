@@ -32,9 +32,11 @@ public class AuditLog {
   @JoinColumn(name = "user_id")
   private User user;
 
-  @ManyToOne
-  @JoinColumn(name = "item_id")
-  private VaultItem vaultItem;
+  @Column(name = "item_id")
+  private Long vaultItemId;
+
+  @Column(name = "item_name")
+  private String vaultItemName;
 
   @Column(name = "action")
   private String action;

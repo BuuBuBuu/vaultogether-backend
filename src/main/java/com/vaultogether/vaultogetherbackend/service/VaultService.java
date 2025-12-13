@@ -17,11 +17,7 @@ import com.vaultogether.vaultogetherbackend.model.VaultKeyShare;
 import com.vaultogether.vaultogetherbackend.model.VaultKeyShareId;
 import com.vaultogether.vaultogetherbackend.model.VaultMember;
 import com.vaultogether.vaultogetherbackend.model.VaultMemberId;
-import com.vaultogether.vaultogetherbackend.repository.UserRepository;
-import com.vaultogether.vaultogetherbackend.repository.VaultKeyShareRepository;
-import com.vaultogether.vaultogetherbackend.repository.VaultMemberRepository;
-import com.vaultogether.vaultogetherbackend.repository.VaultRepository;
-
+import com.vaultogether.vaultogetherbackend.repository.*;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -30,6 +26,7 @@ import lombok.RequiredArgsConstructor;
 public class VaultService {
 
   // Dependency injection with RequiredArgsConstructor
+  private final VaultItemRepository vaultItemRepository;
   private final UserRepository userRepository;
   private final VaultRepository vaultRepository;
   private final VaultMemberRepository vaultMemberRepository;
@@ -48,6 +45,7 @@ public class VaultService {
     Vault vault = new Vault();
     vault.setUser(user.get());
     vault.setName(vaultCreateDTO.getName());
+    vault.setDescription(vaultCreateDTO.getDescription());
     vault.setKeyVersion(0);
 
     // Save new Vault
@@ -71,6 +69,7 @@ public class VaultService {
     VaultResponseDTO responseVault = new VaultResponseDTO();
     responseVault.setVaultId(savedVault.getVaultId());
     responseVault.setName(savedVault.getName());
+    responseVault.setDescription(savedVault.getDescription());
     responseVault.setCreatedAt(savedVault.getCreatedAt());
 
     // Send to audit log
@@ -98,13 +97,18 @@ public class VaultService {
     for (VaultMember vaultMember : vaultMemberships) {
       Vault vault = vaultMember.getVault();
       VaultKeyShareId vaultKeyShareId = new VaultKeyShareId(vault.getVaultId(), user.get().getUserId());
-      Optional<VaultKeyShare> vaultKeyShare = vaultKeyShareRepository.findById(vaultKeyShareId);
+      VaultKeyShare vaultKeyShare = vaultKeyShareRepository.findById(vaultKeyShareId)
+          .orElseThrow(() -> new IllegalArgumentException("VaultKeyShare not found"));
 
       VaultResponseDTO newResponseDTO = new VaultResponseDTO();
       newResponseDTO.setVaultId(vault.getVaultId());
       newResponseDTO.setName(vault.getName());
+      newResponseDTO.setDescription(vault.getDescription());
       newResponseDTO.setCreatedAt(vault.getCreatedAt());
-      newResponseDTO.setEncVaultKey(vaultKeyShare.get().getEncVaultKey());
+      newResponseDTO.setEncVaultKey(vaultKeyShare.getEncVaultKey());
+      newResponseDTO.setRole(vaultMember.getRole());
+      newResponseDTO.setItemCount(vaultItemRepository.countByVault(vault));
+      newResponseDTO.setMemberCount(vaultMemberRepository.countByVault(vault));
       vaultResponseDTOs.add(newResponseDTO);
     }
 
@@ -122,7 +126,7 @@ public class VaultService {
 
     // Find the vault
     Vault vault = vaultRepository.findById(vaultId)
-      .orElseThrow(() -> new IllegalArgumentException("Vault not found"));
+        .orElseThrow(() -> new IllegalArgumentException("Vault not found"));
 
     // Send to audit log
     auditLogService.logAction(requestorId, null, "VAULT_DELETE", null, vault.getName());
@@ -141,7 +145,7 @@ public class VaultService {
 
     // Find the vault
     Vault vault = vaultRepository.findById(vaultId)
-      .orElseThrow(() -> new IllegalArgumentException("Vault not found"));
+        .orElseThrow(() -> new IllegalArgumentException("Vault not found"));
 
     // Update the vault
     Vault savedVault = vault;
@@ -150,7 +154,7 @@ public class VaultService {
     // Get the vault Key
     VaultKeyShareId vaultKeyShareId = new VaultKeyShareId(savedVault.getVaultId(), requestorId);
     VaultKeyShare vaultKeyShare = vaultKeyShareRepository.findById(vaultKeyShareId)
-      .orElseThrow(() -> new IllegalArgumentException("Vault Key not found"));
+        .orElseThrow(() -> new IllegalArgumentException("Vault Key not found"));
 
     // Convert the vault to Vault Response DTO
     VaultResponseDTO responseDTO = new VaultResponseDTO();
@@ -162,6 +166,39 @@ public class VaultService {
     // Send to audit log
     auditLogService.logAction(requestorId, null, "VAULT_UPDATE", null, vault.getName());
 
+    return responseDTO;
+  }
+
+  // Method to get a single vault by Vault ID
+  public VaultResponseDTO getVaultById(Long userId, Long vaultId) {
+    // Check if User exist
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+    // Check if the vault exists
+    Vault vault = vaultRepository.findById(vaultId)
+        .orElseThrow(() -> new IllegalArgumentException("Vault not found"));
+
+    // Check if user has access to this vault through VaultMember
+    VaultMemberId memberId = new VaultMemberId(vaultId, userId);
+    VaultMember vaultMember = vaultMemberRepository.findById(memberId)
+        .orElseThrow(() -> new IllegalArgumentException("User has no access to this vault"));
+
+    // Get the vault key share
+    VaultKeyShareId vaultKeyShareId = new VaultKeyShareId(vaultId, userId);
+    VaultKeyShare vaultKeyShare = vaultKeyShareRepository.findById(vaultKeyShareId)
+        .orElseThrow(() -> new IllegalArgumentException("VaultKeyShare not found"));
+
+    // Build the response TO
+    VaultResponseDTO responseDTO = new VaultResponseDTO();
+    responseDTO.setVaultId(vault.getVaultId());
+    responseDTO.setName(vault.getName());
+    responseDTO.setDescription(vault.getDescription());
+    responseDTO.setCreatedAt(vault.getCreatedAt());
+    responseDTO.setEncVaultKey(vaultKeyShare.getEncVaultKey());
+    responseDTO.setRole(vaultMember.getRole());
+    responseDTO.setItemCount(vaultItemRepository.countByVault(vault));
+    responseDTO.setMemberCount(vaultMemberRepository.countByVault(vault));
     return responseDTO;
   }
 

@@ -7,7 +7,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.vaultogether.vaultogetherbackend.model.AuditLog;
 import com.vaultogether.vaultogetherbackend.model.User;
-import com.vaultogether.vaultogetherbackend.model.Vault;
 import com.vaultogether.vaultogetherbackend.model.VaultItem;
 import com.vaultogether.vaultogetherbackend.repository.AuditLogRepository;
 import com.vaultogether.vaultogetherbackend.repository.UserRepository;
@@ -32,20 +31,24 @@ public class AuditLogService {
     }
 
     VaultItem vaultItem;
+    String vaultItemName;
     if (itemId != null) {
       Optional<VaultItem> foundItem = vaultItemRepository.findById(itemId);
       if (foundItem.isEmpty()) {
         throw new IllegalArgumentException("Vault Item not found");
       }
       vaultItem = foundItem.get();
+      vaultItemName = vaultItem.getTitle();
     } else {
       vaultItem = null;
+      vaultItemName = null;
     }
 
      // Create audit log object
     AuditLog auditLog = new AuditLog();
     auditLog.setUser(user.get());
-    auditLog.setVaultItem(vaultItem);
+    auditLog.setVaultItemId(itemId);
+    auditLog.setVaultItemName(vaultItemName);
     auditLog.setAction(action);
     auditLog.setIp(ip);
     auditLog.setMeta(meta);
