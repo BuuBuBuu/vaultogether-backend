@@ -13,6 +13,7 @@ import com.vaultogether.vaultogetherbackend.dto.UserRegisterDTO;
 import com.vaultogether.vaultogetherbackend.dto.UserResponseDTO;
 import com.vaultogether.vaultogetherbackend.service.UserService;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -24,7 +25,7 @@ public class UserController {
   private final UserService userService;
 
   @PostMapping("/register")
-  public ResponseEntity<?> register(@RequestBody UserRegisterDTO userRegisterDTO) {
+  public ResponseEntity<?> register(@Valid @RequestBody UserRegisterDTO userRegisterDTO) {
     try {
       UserResponseDTO saved = userService.registerUser(userRegisterDTO);
       return ResponseEntity.status(HttpStatus.CREATED).body(saved);
@@ -34,7 +35,7 @@ public class UserController {
   }
 
   @PostMapping("/login")
-  public ResponseEntity<?> login(@RequestBody UserLoginDTO userLoginDTO) {
+  public ResponseEntity<?> login(@Valid @RequestBody UserLoginDTO userLoginDTO) {
     try {
       UserResponseDTO response = userService.login(userLoginDTO);
       return ResponseEntity.status(HttpStatus.OK).body(response);

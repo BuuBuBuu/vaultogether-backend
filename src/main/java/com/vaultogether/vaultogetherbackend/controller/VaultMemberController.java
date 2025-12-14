@@ -20,7 +20,7 @@ import com.vaultogether.vaultogetherbackend.dto.VaultMemberResponseDTO;
 import com.vaultogether.vaultogetherbackend.model.Role;
 import com.vaultogether.vaultogetherbackend.service.VaultMemberService;
 
-import jakarta.websocket.server.PathParam;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -33,7 +33,7 @@ public class VaultMemberController {
 
   @PostMapping("/add")
   public ResponseEntity<?> add(@RequestParam Long requestorId, @RequestParam Long vaultId,
-      @RequestBody VaultMemberAddDTO vaultMemberAddDTO) {
+      @Valid @RequestBody VaultMemberAddDTO vaultMemberAddDTO) {
 
     try {
       vaultMemberService.addMember(requestorId, vaultId, vaultMemberAddDTO);

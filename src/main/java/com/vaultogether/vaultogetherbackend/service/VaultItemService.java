@@ -10,6 +10,8 @@ import com.vaultogether.vaultogetherbackend.dto.VaultItemResponseDTO;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.vaultogether.exception.ForbiddenException;
+import com.vaultogether.exception.ResourceNotFoundException;
 import com.vaultogether.vaultogetherbackend.dto.VaultItemCreateDTO;
 import com.vaultogether.vaultogetherbackend.model.Role;
 import com.vaultogether.vaultogetherbackend.model.Vault;
@@ -48,7 +50,7 @@ public class VaultItemService {
     // Check that the vault exists
     Optional<Vault> vault = vaultRepository.findById(vaultId);
     if (vault.isEmpty()) {
-      throw new IllegalArgumentException("Vault not found");
+      throw new ResourceNotFoundException("Vault not found");
     }
 
     // Call method from repository to get the list of data
@@ -75,7 +77,7 @@ public class VaultItemService {
     // Check that the vault exists
     Optional<Vault> vault = vaultRepository.findById(vaultId);
     if (vault.isEmpty()) {
-      throw new IllegalArgumentException("Vault not found");
+      throw new ResourceNotFoundException("Vault not found");
     }
 
     // Use JsonMapper to turn to JSON strings to store properly
@@ -120,12 +122,12 @@ public class VaultItemService {
     Optional<VaultItem> vaultItem = vaultItemRepository.findById(itemId);
     // Verify existence
     if (vaultItem.isEmpty()) {
-      throw new IllegalArgumentException("Item not found");
+      throw new ResourceNotFoundException("Item not found");
     }
 
     // Verify whether the item belongs to this vault
     if (!vaultItem.get().getVault().getVaultId().equals(vaultId)) {
-      throw new IllegalArgumentException("Item not found");
+      throw new ResourceNotFoundException("Item not found");
     }
 
     // Send to audit log
@@ -149,18 +151,18 @@ public class VaultItemService {
     // Verify vault exists
     Optional<Vault> vault = vaultRepository.findById(vaultId);
     if (vault.isEmpty()) {
-      throw new IllegalArgumentException("Vault not found");
+      throw new ResourceNotFoundException("Vault not found");
     }
 
     // Find the existing item
     Optional<VaultItem> existingItem = vaultItemRepository.findById(itemId);
     if (existingItem.isEmpty()) {
-      throw new IllegalArgumentException("Item not found");
+      throw new ResourceNotFoundException("Item not found");
     }
 
     // Verify whether the item belongs to this vault
     if (!existingItem.get().getVault().getVaultId().equals(vaultId)) {
-      throw new IllegalArgumentException("Item not found");
+      throw new ResourceNotFoundException("Item not found");
     }
 
     VaultItem vaultItem = existingItem.get();
@@ -219,13 +221,13 @@ public class VaultItemService {
     VaultMemberId memberId = new VaultMemberId(vaultId, userId);
     Optional<VaultMember> vaultMember = vaultMemberRepository.findById(memberId);
     if (vaultMember.isEmpty()) {
-      throw new IllegalArgumentException("User has no access");
+      throw new ForbiddenException("User has no access");
     }
 
     // Get the Member's access
     Role memberRole = vaultMember.get().getRole();
     if (!requiredRole.contains(memberRole)) {
-      throw new IllegalArgumentException("No Access");
+      throw new ForbiddenException("No Access");
     }
   }
 

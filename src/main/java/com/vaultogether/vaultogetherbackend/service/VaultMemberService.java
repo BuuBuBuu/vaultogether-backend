@@ -7,6 +7,8 @@ import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.vaultogether.exception.ForbiddenException;
+import com.vaultogether.exception.ResourceNotFoundException;
 import com.vaultogether.vaultogetherbackend.dto.VaultMemberAddDTO;
 import com.vaultogether.vaultogetherbackend.dto.VaultMemberResponseDTO;
 import com.vaultogether.vaultogetherbackend.model.Role;
@@ -46,7 +48,7 @@ public class VaultMemberService {
 
     // Get the vault
     Vault vault = vaultRepository.findById(vaultId)
-        .orElseThrow(() -> new IllegalArgumentException("Vault not found"));
+        .orElseThrow(() -> new ResourceNotFoundException("Vault not found"));
 
     // Find all members
     List<VaultMember> members = vaultMemberRepository.findByVault(vault);
@@ -74,20 +76,20 @@ public class VaultMemberService {
 
     // Check if vault exists
     Vault vault = vaultRepository.findById(vaultId)
-        .orElseThrow(() -> new IllegalArgumentException("Vault not found"));
+        .orElseThrow(() -> new ResourceNotFoundException("Vault not found"));
 
     // Find user by email
     User user = userRepository.findByEmail(email)
-        .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
     // Find member
     VaultMemberId memberId = new VaultMemberId(vaultId, user.getUserId());
     VaultMember member = vaultMemberRepository.findById(memberId)
-        .orElseThrow(() -> new IllegalArgumentException("Member not found"));
+        .orElseThrow(() -> new ResourceNotFoundException("Member not found"));
 
     // Don't allow changing owner role
     if (member.getRole() == Role.OWNER) {
-      throw new IllegalArgumentException("Cannot change owner role");
+      throw new ForbiddenException("Cannot change owner role");
     }
 
     // Update role
@@ -109,19 +111,19 @@ public class VaultMemberService {
     // Check whether there is vault with the provided vaultId
     Optional<Vault> vault = vaultRepository.findById(vaultId);
     if (vault.isEmpty()) {
-      throw new IllegalArgumentException("Vault not found");
+      throw new ResourceNotFoundException("Vault not found");
     }
 
     // Find the user using the provided email
     Optional<User> user = userRepository.findByEmail(vaultMemberAddDTO.getEmail());
     if (user.isEmpty()) {
-      throw new IllegalArgumentException("User not found");
+      throw new ResourceNotFoundException("User not found");
     }
 
     // Check whether the user already exists as a member of the vault
     boolean exists = vaultMemberRepository.existsByVaultAndUser(vault.get(), user.get());
     if (exists) {
-      throw new IllegalArgumentException("User already a member of vault");
+      throw new ForbiddenException("User already a member of vault");
     }
 
     // Save new record to the vault member table
@@ -155,21 +157,21 @@ public class VaultMemberService {
 
     // Check if the vault exists
     Vault vault = vaultRepository.findById(vaultId)
-        .orElseThrow(() -> new IllegalArgumentException("Vault not found"));
+        .orElseThrow(() -> new ResourceNotFoundException("Vault not found"));
 
     // Check that the user exists through email
     User user = userRepository.findByEmail(email)
-        .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
     // Check if the member exists
     VaultMemberId vaultMemberId = new VaultMemberId(vaultId, user.getUserId());
     VaultMember vaultMember = vaultMemberRepository.findById(vaultMemberId)
-        .orElseThrow(() -> new IllegalArgumentException("Vault member not found"));
+        .orElseThrow(() -> new ResourceNotFoundException("Vault member not found"));
 
     // Find vault key of the vault member
     VaultKeyShareId vaultKeyShareId = new VaultKeyShareId(vaultId, user.getUserId());
     VaultKeyShare vaultKeyShare = vaultKeyShareRepository.findById(vaultKeyShareId)
-        .orElseThrow(() -> new IllegalArgumentException("Vault key not found"));
+        .orElseThrow(() -> new ResourceNotFoundException("Vault key not found"));
 
     // Send to audit log
     auditLogService.logAction(requestorId, null, "REMOVE_MEMBER", null, vault.getName() + " " + user.getEmail());
@@ -185,13 +187,13 @@ public class VaultMemberService {
     VaultMemberId memberId = new VaultMemberId(vaultId, userId);
     Optional<VaultMember> vaultMember = vaultMemberRepository.findById(memberId);
     if (vaultMember.isEmpty()) {
-      throw new IllegalArgumentException("User has no access");
+      throw new ForbiddenException("User has no access");
     }
 
     // Get the Member's access
     Role memberRole = vaultMember.get().getRole();
     if (!requiredRole.contains(memberRole)) {
-      throw new IllegalArgumentException("No Access");
+      throw new ForbiddenException("No Access");
     }
   }
 }

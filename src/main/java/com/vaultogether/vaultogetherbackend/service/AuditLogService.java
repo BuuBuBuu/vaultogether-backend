@@ -5,6 +5,7 @@ import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.vaultogether.exception.ResourceNotFoundException;
 import com.vaultogether.vaultogetherbackend.model.AuditLog;
 import com.vaultogether.vaultogetherbackend.model.User;
 import com.vaultogether.vaultogetherbackend.model.VaultItem;
@@ -27,7 +28,7 @@ public class AuditLogService {
   public void logAction(Long userId, Long itemId, String action, String ip, String meta) {
     Optional<User> user = userRepository.findById(userId);
     if (user.isEmpty()) {
-      throw new IllegalArgumentException("User not found");
+      throw new ResourceNotFoundException("User not found");
     }
 
     VaultItem vaultItem;
@@ -35,7 +36,7 @@ public class AuditLogService {
     if (itemId != null) {
       Optional<VaultItem> foundItem = vaultItemRepository.findById(itemId);
       if (foundItem.isEmpty()) {
-        throw new IllegalArgumentException("Vault Item not found");
+        throw new ResourceNotFoundException("Vault Item not found");
       }
       vaultItem = foundItem.get();
       vaultItemName = vaultItem.getTitle();

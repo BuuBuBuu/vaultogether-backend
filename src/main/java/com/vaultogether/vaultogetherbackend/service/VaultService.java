@@ -7,6 +7,8 @@ import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.vaultogether.exception.ForbiddenException;
+import com.vaultogether.exception.ResourceNotFoundException;
 import com.vaultogether.vaultogetherbackend.dto.VaultCreateDTO;
 import com.vaultogether.vaultogetherbackend.dto.VaultResponseDTO;
 import com.vaultogether.vaultogetherbackend.dto.VaultUpdateDTO;
@@ -38,7 +40,7 @@ public class VaultService {
     // Check if the User exists (else throw exception)
     Optional<User> user = userRepository.findById(userId);
     if (user.isEmpty()) {
-      throw new IllegalArgumentException("User not found");
+      throw new ResourceNotFoundException("User not found");
     }
 
     // Convert VaultCreateDTO to Vault object
@@ -83,7 +85,7 @@ public class VaultService {
     // Check if the User exists (Else throw exception)
     Optional<User> user = userRepository.findById(userId);
     if (user.isEmpty()) {
-      throw new IllegalArgumentException("User not found");
+      throw new ResourceNotFoundException("User not found");
     }
 
     // Call VaultRepository to find by User's UserId
@@ -98,7 +100,7 @@ public class VaultService {
       Vault vault = vaultMember.getVault();
       VaultKeyShareId vaultKeyShareId = new VaultKeyShareId(vault.getVaultId(), user.get().getUserId());
       VaultKeyShare vaultKeyShare = vaultKeyShareRepository.findById(vaultKeyShareId)
-          .orElseThrow(() -> new IllegalArgumentException("VaultKeyShare not found"));
+          .orElseThrow(() -> new ResourceNotFoundException("VaultKeyShare not found"));
 
       VaultResponseDTO newResponseDTO = new VaultResponseDTO();
       newResponseDTO.setVaultId(vault.getVaultId());
@@ -126,7 +128,7 @@ public class VaultService {
 
     // Find the vault
     Vault vault = vaultRepository.findById(vaultId)
-        .orElseThrow(() -> new IllegalArgumentException("Vault not found"));
+        .orElseThrow(() -> new ResourceNotFoundException("Vault not found"));
 
     // Send to audit log
     auditLogService.logAction(requestorId, null, "VAULT_DELETE", null, vault.getName());
@@ -145,7 +147,7 @@ public class VaultService {
 
     // Find the vault
     Vault vault = vaultRepository.findById(vaultId)
-        .orElseThrow(() -> new IllegalArgumentException("Vault not found"));
+        .orElseThrow(() -> new ResourceNotFoundException("Vault not found"));
 
     // Update the vault
     Vault savedVault = vault;
@@ -154,7 +156,7 @@ public class VaultService {
     // Get the vault Key
     VaultKeyShareId vaultKeyShareId = new VaultKeyShareId(savedVault.getVaultId(), requestorId);
     VaultKeyShare vaultKeyShare = vaultKeyShareRepository.findById(vaultKeyShareId)
-        .orElseThrow(() -> new IllegalArgumentException("Vault Key not found"));
+        .orElseThrow(() -> new ResourceNotFoundException("Vault Key not found"));
 
     // Convert the vault to Vault Response DTO
     VaultResponseDTO responseDTO = new VaultResponseDTO();
@@ -173,21 +175,21 @@ public class VaultService {
   public VaultResponseDTO getVaultById(Long userId, Long vaultId) {
     // Check if User exist
     User user = userRepository.findById(userId)
-        .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
     // Check if the vault exists
     Vault vault = vaultRepository.findById(vaultId)
-        .orElseThrow(() -> new IllegalArgumentException("Vault not found"));
+        .orElseThrow(() -> new ResourceNotFoundException("Vault not found"));
 
     // Check if user has access to this vault through VaultMember
     VaultMemberId memberId = new VaultMemberId(vaultId, userId);
     VaultMember vaultMember = vaultMemberRepository.findById(memberId)
-        .orElseThrow(() -> new IllegalArgumentException("User has no access to this vault"));
+        .orElseThrow(() -> new ForbiddenException("User has no access to this vault"));
 
     // Get the vault key share
     VaultKeyShareId vaultKeyShareId = new VaultKeyShareId(vaultId, userId);
     VaultKeyShare vaultKeyShare = vaultKeyShareRepository.findById(vaultKeyShareId)
-        .orElseThrow(() -> new IllegalArgumentException("VaultKeyShare not found"));
+        .orElseThrow(() -> new ResourceNotFoundException("VaultKeyShare not found"));
 
     // Build the response TO
     VaultResponseDTO responseDTO = new VaultResponseDTO();
@@ -208,13 +210,13 @@ public class VaultService {
     VaultMemberId memberId = new VaultMemberId(vaultId, userId);
     Optional<VaultMember> vaultMember = vaultMemberRepository.findById(memberId);
     if (vaultMember.isEmpty()) {
-      throw new IllegalArgumentException("User has no access");
+      throw new ForbiddenException("User has no access");
     }
 
     // Get the Member's access
     Role memberRole = vaultMember.get().getRole();
     if (!requiredRole.contains(memberRole)) {
-      throw new IllegalArgumentException("No Access");
+      throw new ForbiddenException("No Access");
     }
   }
 }

@@ -5,11 +5,12 @@ import java.util.Optional;
 
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.vaultogether.exception.ForbiddenException;
+import com.vaultogether.exception.ResourceNotFoundException;
 import com.vaultogether.vaultogetherbackend.dto.UserLoginDTO;
 import com.vaultogether.vaultogetherbackend.dto.UserRegisterDTO;
 import com.vaultogether.vaultogetherbackend.dto.UserResponseDTO;
@@ -27,17 +28,8 @@ public class UserService implements UserDetailsService {
   private final PasswordEncoder passwordEncoder;
 
   public UserResponseDTO registerUser(UserRegisterDTO userRegisterDTO) {
-    if (userRegisterDTO == null) {
-      throw new IllegalArgumentException("User cannot be null");
-    }
-    if (userRegisterDTO.getEmail() == null || userRegisterDTO.getEmail().isEmpty()) {
-      throw new IllegalArgumentException("Email cannot be empty");
-    }
-    if (userRegisterDTO.getPassword() == null || userRegisterDTO.getPassword().isEmpty()) {
-      throw new IllegalArgumentException("Password cannot be empty");
-    }
     if (userRepository.existsByEmail(userRegisterDTO.getEmail())) {
-      throw new IllegalArgumentException("Email already exists");
+      throw new ForbiddenException("Email already exists");
     }
 
     // Convert UserRegisterDTO to User object
@@ -58,25 +50,15 @@ public class UserService implements UserDetailsService {
 
   // Method for user login
   public UserResponseDTO login(UserLoginDTO userLoginDTO) {
-    if (userLoginDTO == null) {
-      throw new IllegalArgumentException("User cannot be null");
-    }
-    if (userLoginDTO.getEmail() == null || userLoginDTO.getEmail().isEmpty()) {
-      throw new IllegalArgumentException("Email cannot be empty");
-    }
-    if (userLoginDTO.getPassword() == null || userLoginDTO.getPassword().isEmpty()) {
-      throw new IllegalArgumentException("Password cannot be empty");
-    }
-
     // Find existing user
     Optional<User> user = userRepository.findByEmail(userLoginDTO.getEmail());
     if (user.isEmpty()) {
-      throw new IllegalArgumentException("User not found");
+      throw new ResourceNotFoundException("User not found");
     }
 
     // Check password is same
     if (!passwordEncoder.matches(userLoginDTO.getPassword(), user.get().getPasswordHash())) {
-      throw new IllegalArgumentException("Password incorrect");
+      throw new ForbiddenException("Password incorrect");
     }
 
     // Convert the User to UserResponseDTO
@@ -91,15 +73,15 @@ public class UserService implements UserDetailsService {
   // Helper method to get User object from email
   public User getUserByEmail(String email) {
     return userRepository.findByEmail(email)
-      .orElseThrow(() -> new IllegalArgumentException("User not found: " + email));
+      .orElseThrow(() -> new ResourceNotFoundException("User not found: " + email));
   }
 
   @Override
-  public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+  public UserDetails loadUserByUsername(String email) {
     // Find the User entity from userReposityt
     // If not found throw new UsernameNotFoundException("User not found")
     User user = userRepository.findByEmail(email)
-      .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+      .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
     // Return the Spring User object
     return new org.springframework.security.core.userdetails.User(

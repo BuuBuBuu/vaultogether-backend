@@ -18,6 +18,7 @@ import com.vaultogether.vaultogetherbackend.dto.VaultCreateDTO;
 import com.vaultogether.vaultogetherbackend.dto.VaultResponseDTO;
 import com.vaultogether.vaultogetherbackend.service.VaultService;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -29,7 +30,7 @@ public class VaultController {
   private final VaultService vaultService;
 
   @PostMapping("/create")
-  public ResponseEntity<?> create(@RequestBody VaultCreateDTO vaultCreateDTO, @RequestParam Long userId) {
+  public ResponseEntity<?> create(@Valid @RequestBody VaultCreateDTO vaultCreateDTO, @RequestParam Long userId) {
 
     try {
       VaultResponseDTO response = vaultService.createVault(userId, vaultCreateDTO);

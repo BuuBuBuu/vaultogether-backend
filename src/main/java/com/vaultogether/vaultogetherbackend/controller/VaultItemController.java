@@ -19,6 +19,7 @@ import com.vaultogether.vaultogetherbackend.dto.VaultItemCreateDTO;
 import com.vaultogether.vaultogetherbackend.dto.VaultItemResponseDTO;
 import com.vaultogether.vaultogetherbackend.service.VaultItemService;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -42,7 +43,7 @@ public class VaultItemController {
 
   @PostMapping()
   public ResponseEntity<?> create(@RequestParam Long requestorId, @PathVariable Long vaultId,
-    @RequestBody VaultItemCreateDTO vaultItemCreateDTO) {
+    @Valid @RequestBody VaultItemCreateDTO vaultItemCreateDTO) {
 
     try {
       VaultItemResponseDTO response = vaultItemService.createItem(requestorId, vaultId, vaultItemCreateDTO);
@@ -66,7 +67,7 @@ public class VaultItemController {
 
   @PutMapping("/{itemId}")
   public ResponseEntity<?> update(@RequestParam Long requestorId, @PathVariable Long vaultId,
-    @PathVariable Long itemId, @RequestBody VaultItemCreateDTO vaultItemCreateDTO) {
+    @PathVariable Long itemId, @Valid @RequestBody VaultItemCreateDTO vaultItemCreateDTO) {
 
       try {
         VaultItemResponseDTO response = vaultItemService.updateItem(requestorId, vaultId, itemId, vaultItemCreateDTO);
