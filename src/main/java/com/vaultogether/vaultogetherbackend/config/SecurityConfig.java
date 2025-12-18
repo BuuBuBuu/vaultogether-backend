@@ -24,11 +24,11 @@ public class SecurityConfig {
     http
         .csrf(csrf -> csrf.disable()) // Disable CSRF for easier testing
         .authorizeHttpRequests(auth -> auth
-            .requestMatchers("/api/**").permitAll() // Allow these endpoints to be accessed
+            .requestMatchers("/api/**").permitAll() // now just allow all endpoints to be called as capstone no need security
             .anyRequest().authenticated() // Block everything else
         );
     return http.build();
   }
 
- 
+
 }
