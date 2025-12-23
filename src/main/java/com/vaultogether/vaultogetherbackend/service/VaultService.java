@@ -150,8 +150,10 @@ public class VaultService {
         .orElseThrow(() -> new ResourceNotFoundException("Vault not found"));
 
     // Update the vault
-    Vault savedVault = vault;
-    savedVault.setName(vaultUpdateDTO.getName());
+    // Vault savedVault = vault;
+    // savedVault.setName(vaultUpdateDTO.getName());
+    vault.setName(vaultUpdateDTO.getName());
+    Vault savedVault = vaultRepository.save(vault);
 
     // Get the vault Key
     VaultKeyShareId vaultKeyShareId = new VaultKeyShareId(savedVault.getVaultId(), requestorId);
